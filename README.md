@@ -13,4 +13,4 @@ CSS Paint Worklet (Houdini) to generate cellular noise based mesh.
 
 ## Example
 
-See [index.html](index.html).
+See [index.html](index.html) ([live](https://dyuri.github.io/repa-css-mesh/index.html)).
