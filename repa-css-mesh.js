@@ -22,7 +22,8 @@ class RepaMesh {
       "--mesh-phase",
       "--mesh-node-color",
       "--mesh-line-color",
-      "--mesh-fill-color"
+      "--mesh-fill-color",
+      "--mesh-starmap"
     ];
   }
 
@@ -38,6 +39,21 @@ class RepaMesh {
     const node_color = this.parseProp(props.get("--mesh-node-color")) || "#888";
     const line_color = this.parseProp(props.get("--mesh-line-color")) || "#aaa";
     const fill_color = this.parseProp(props.get("--mesh-fill-color"));
+    const starmap = this.parseProp(props.get("--mesh-starmap"));
+    let [starmapMin, starmapMax] = starmap ? starmap.split(",").map(parseFloat) : [];
+
+    if (starmapMin !== undefined) {
+      starmapMax = starmapMax || starmapMin;
+      if (starmapMin > starmapMax) {
+        [starmapMin, starmapMax] = [starmapMax, starmapMin];
+      }
+    }
+
+    if (!this.logged) {
+      this.logged = true;
+      console.log("SM", starmapMin, starmapMax);
+    }
+
     const rng = mulberry32(seed);
 
     // generate grid
@@ -57,33 +73,66 @@ class RepaMesh {
     }
 
     for (let j = -1; j <= vcount; j++) {
-      let line = [];
       for (let i = -1; i <= count; i++) {
         let node = grid[j+1][i+1];
         let cx = (i + node.x) * cellsize;
         let cy = (j + node.y) * cellsize;
 
-        // lines
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        [[i, j+1], [i+1, j+1], [i+1, j]].forEach(n => {
-          const [ni, nj] = n;
-          const nnode = grid[nj+1]?.[ni+1];
-          if (nnode) {
-            let nx = (ni + nnode.x) * cellsize;
-            let ny = (nj + nnode.y) * cellsize;
+        if (!starmap) {
+          // mesh mode
+          // lines
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          [[i, j+1], [i+1, j+1], [i+1, j]].forEach(n => {
+            const [ni, nj] = n;
+            const nnode = grid[nj+1]?.[ni+1];
+            if (nnode) {
+              let nx = (ni + nnode.x) * cellsize;
+              let ny = (nj + nnode.y) * cellsize;
 
-            ctx.lineTo(nx, ny);
+              ctx.lineTo(nx, ny);
+            }
+          });
+          ctx.closePath();
+          if (line_color) {
+            ctx.strokeStyle = line_color;
+            ctx.stroke();
           }
-        });
-        ctx.closePath();
-        if (line_color) {
-          ctx.strokeStyle = line_color;
-          ctx.stroke();
-        }
-        if (fill_color) {
-          ctx.fillStyle = fill_color;
-          ctx.fill();
+          if (fill_color) {
+            ctx.fillStyle = fill_color;
+            ctx.fill();
+          }
+        } else {
+          // starmap mode
+          [
+            [i-1, j-1], [i-1, j], [i-1, j+1],
+            [i, j-1], [i, j+1],
+            [i+1, j+1], [i+1, j], [i+1, j-1]].forEach(n => {
+            const [ni, nj] = n;
+            const nnode = grid[nj+1]?.[ni+1];
+            if (nnode) {
+              let nx = (ni + nnode.x) * cellsize;
+              let ny = (nj + nnode.y) * cellsize;
+
+              const length = Math.sqrt((cx - nx)*(cx - nx) + (cy - ny)*(cy - ny)) / cellsize;
+
+              if (length < starmapMin) {
+                ctx.globalAlpha = 1;
+              } else if (length > starmapMax) {
+                ctx.globalAlpha = 0;
+              } else {
+                ctx.globalAlpha = 1 - (length - starmapMin) / (starmapMax - starmapMin);
+              }
+
+              ctx.beginPath();
+              ctx.moveTo(cx, cy);
+              ctx.lineTo(nx, ny);
+
+              ctx.strokeStyle = line_color;
+              ctx.stroke();
+            }
+          });
+          ctx.globalAlpha = 1;
         }
 
         // dot

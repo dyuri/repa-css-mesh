@@ -10,6 +10,10 @@ CSS Paint Worklet (Houdini) to generate cellular noise based mesh.
 - `--mesh-node-color` - color of nodes
 - `--mesh-line-color` - color of lines
 - `--mesh-fill-color` - fill color of cells
+- `--mesh-starmap` - `min, max` - starmap mode minimum/maximum distance
+  - if distance is less than `min` then the line is fully solid
+  - if distance is more than `max` then the line is transparent
+  - alpha value is set linearly in between `min` and `max`
 
 ## Example
 

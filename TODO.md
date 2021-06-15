@@ -1,2 +1,1 @@
-- line color/alpha based on distance
 - random/pre-defined fill colors
