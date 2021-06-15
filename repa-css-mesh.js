@@ -42,16 +42,11 @@ class RepaMesh {
     const starmap = this.parseProp(props.get("--mesh-starmap"));
     let [starmapMin, starmapMax] = starmap ? starmap.split(",").map(parseFloat) : [];
 
-    if (starmapMin !== undefined) {
+    if (typeof starmapMin !== "undefined") {
       starmapMax = starmapMax || starmapMin;
       if (starmapMin > starmapMax) {
         [starmapMin, starmapMax] = [starmapMax, starmapMin];
       }
-    }
-
-    if (!this.logged) {
-      this.logged = true;
-      console.log("SM", starmapMin, starmapMax);
     }
 
     const rng = mulberry32(seed);
